@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>7-Segment Digital Clock</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #111;
+      display: grid;
+      place-items: center;
+      height: 100vh;
+      color: #fff;
+    }
+
+    .holder {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="holder"></div>
+
+  <script>
+    const digitDisplay = {
+      structure: {
+        type: 'div',
+        className: 'digit',
+        children: [
+          { type: 'div', className: 'one' },
+          { type: 'div', className: 'two' },
+          { type: 'div', className: 'three' },
+          { type: 'div', className: 'four' },
+          { type: 'div', className: 'five' },
+          { type: 'div', className: 'six' },
+          { type: 'div', className: 'seven' }
+        ]
+      },
+      styles: {
+        digit: {
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          placeItems: 'center',
+          maxWidth: '300px',
+          margin: '0 auto'
+        },
+        allDivs: {
+          backgroundColor: '#222',
+          textAlign: 'center'
+        },
+        two: {
+          alignSelf: 'start'
+        },
+        six: {
+          alignSelf: 'end'
+        },
+        four: {
+          gridColumn: 'span 3'
+        },
+        oddNumbers: {
+          width: '5px',
+          height: '24px',
+          margin: '1px',
+          clipPath: 'polygon(3px 0, calc(100% - 3px) 0, 100% 3px, 100% calc(100% - 3px), calc(100% - 3px) 100%, 3px 100%, 0 calc(100% - 3px), 0 3px)'
+        },
+        evenNumbersAndFour: {
+          margin: '-3px',
+          width: '18px',
+          height: '5px',
+          clipPath: 'polygon(3px 0, calc(100% - 3px) 0, 100% 50%, calc(100% - 3px) 100%, 3px 100%, 0 50%)'
+        }
+      }
+    };
+
+    const digitSegmentMap = {
+      1: 'three,seven',
+      2: 'two,three,four,five,six',
+      3: 'two,three,four,six,seven',
+      4: 'one,three,four,seven',
+      5: 'one,two,four,six,seven',
+      6: 'one,two,four,five,six,seven',
+      7: 'two,three,seven',
+      8: 'one,two,three,four,five,six,seven',
+      9: 'one,two,three,four,six,seven',
+      0: 'one,two,three,five,six,seven'
+    };
+
+    function createDigit() {
+      const digit = document.createElement(digitDisplay.structure.type);
+      digit.className = digitDisplay.structure.className;
+      Object.assign(digit.style, digitDisplay.styles.digit);
+
+      digitDisplay.structure.children.forEach(child => {
+        const el = document.createElement(child.type);
+        el.className = child.className;
+        Object.assign(el.style, digitDisplay.styles.allDivs);
+        Object.assign(el.style, digitDisplay.styles[child.className] || {});
+        Object.assign(
+          el.style,
+          ['one', 'three', 'five', 'seven'].includes(child.className)
+            ? digitDisplay.styles.oddNumbers
+            : digitDisplay.styles.evenNumbersAndFour
+        );
+
+        digit.appendChild(el);
+      });
+
+      return digit;
+    }
+
+    function updateDigit(digitElement, number) {
+      const activeSegments = (digitSegmentMap[number] || '').split(',');
+      digitElement.querySelectorAll('div').forEach(segment => {
+        const isActive = activeSegments.includes(segment.className);
+        segment.style.backgroundColor = isActive ? '#ff0000' : '#222222';
+      });
+    }
+
+    function createColon() {
+      const colon = document.createElement('div');
+      colon.style.display = 'flex';
+      colon.style.flexDirection = 'column';
+      colon.style.justifyContent = 'space-around';
+      colon.style.height = '36px';
+      colon.style.margin = '0 4px';
+
+      for (let i = 0; i < 2; i++) {
+        const dot = document.createElement('div');
+        dot.style.width = '6px';
+        dot.style.height = '6px';
+        dot.style.backgroundColor = '#ff0000';
+        colon.appendChild(dot);
+      }
+
+      return colon;
+    }
+
+    function createClock() {
+      const clock = document.createElement('div');
+      clock.style.display = 'flex';
+      clock.style.justifyContent = 'center';
+      clock.style.alignItems = 'center';
+      clock.style.gap = '4px';
+
+      for (let i = 0; i < 6; i++) {
+        clock.appendChild(createDigit());
+        if (i === 1 || i === 3) {
+          clock.appendChild(createColon());
+        }
+      }
+
+      return clock;
+    }
+
+    function updateClock(clock) {
+      const now = new Date();
+      let hours = now.getHours();
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const seconds = now.getSeconds().toString().padStart(2, '0');
+
+      if (hours > 12) {
+        hours = hours - 12;
+      } else if (hours === 0) {
+        hours = 12;
+      }
+
+      hours = hours.toString().padStart(2, '0');
+      const timeString = hours + minutes + seconds;
+
+      const digitElements = clock.querySelectorAll('.digit');
+      for (let i = 0; i < 6; i++) {
+        updateDigit(digitElements[i], parseInt(timeString[i], 10));
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const holder = document.querySelector('.holder');
+      const clockElement = createClock();
+      holder.appendChild(clockElement);
+
+      updateClock(clockElement);
+      setInterval(() => updateClock(clockElement), 250);
+    });
+  </script>
+</body>
+</html>
